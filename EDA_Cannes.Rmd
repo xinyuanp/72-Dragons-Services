@@ -1,0 +1,191 @@
+---
+title: "EDA_Cannes"
+author: "Xinyuan Peng"
+date: "2020/6/26"
+output: html_document
+---
+
+```{r}
+#Import the data of Company (5690 companies in total)
+library(readr)
+company<- read_csv("Cinando_CompanySearch.csv",col_types = list(X1 = col_skip()))
+for (i in 1:ncol(company)){
+  company[,i]<-iconv(unlist(company[,i]) , to = "UTF-8")
+}
+head(company)
+```
+```{r}
+library(plotly)
+library(plyr)
+#Number of companies in each country (in total 115 countries)
+country_list<-sort(table(company$Country),decreasing = T)
+country<-as.data.frame(country_list)
+head(country)
+fig_country <- plot_ly(y=country$Freq,x=country$Var1, type = "bar")
+fig_country
+```
+
+```{r}
+#Number of companies in each states in the US
+company_us<-company[company$Country=="USA",]
+state_list<-sort(table(company_us$State),decreasing = T)
+state<-as.data.frame(state_list)
+head(state)
+fig_state <- plot_ly(y=state$Freq,x=state$Var1, type = "bar")
+fig_state
+```
+
+```{r}
+#Import the data of film (2929 films in total)
+library(readxl)
+film <- read_excel("Cinando_FilmSearch.xlsx")
+head(film)
+```
+
+```{r}
+#Number of films in each genre (in total 39 genres)
+genre_list <-sort(table(film$Genre),decreasing = T)
+genre <- as.data.frame(genre_list)
+head(genre)
+fig_genre <- plot_ly(y=genre$Freq,x=genre$Var1, type = "bar")
+fig_genre
+```
+
+```{r}
+#Number of films in each country (in total 101 countries)
+country_list_film<-sort(table(film$Country),decreasing = T)
+country_film<-as.data.frame(country_list_film)
+head(country_film)
+fig_country_film <- plot_ly(y=country_film$Freq,x=country_film$Var1, type = "bar")
+fig_country_film
+```
+
+```{r}
+#Number of films produced in each year (1923-2026)
+year_list_film<-sort(table(film$`Year of Production`),decreasing = T)
+year_film<-as.data.frame(year_list_film)
+head(year_film)
+fig_year_film <- plot_ly(y=year_film$Freq,x=year_film$Var1, type = "bar")
+fig_year_film
+```
+
+```{r}
+#Import the data of people (9335 people in total)
+library(dplyr)
+people <- read_csv("Cinando_PeopleSearch.csv",col_types = list(X1 = col_skip()))
+for (i in 1:ncol(people)){
+  people[,i]<-iconv(unlist(people[,i]) , to = "UTF-8")
+}
+head(people)
+people%>%group_by(`Job title`)%>%count(sort=TRUE)
+```
+
+```{r}
+#Number of people in each country (in total 115 countries)
+country_list_people<-sort(table(people$Country),decreasing = T)
+country_people<-as.data.frame(country_list_people)
+head(country_people)
+fig_country_people <- plot_ly(y=country_people$Freq,x=country_people$Var1, type = "bar")
+fig_country_people
+```
+
+```{r}
+#Import the screening data (1214 screening films in total, some may screen more than 1 time, 866 films in total)
+screen <- read_excel("Cinando_Screenings.xlsx")
+head(screen)
+```
+```{r}
+#Screeing films' genre (34 in total)
+genre_screen_list <-sort(table(screen$Genre),decreasing = T)
+genre_screen <- as.data.frame(genre_screen_list)
+genre_screen
+fig_genre_screen <- plot_ly(y=genre_screen$Freq,x=genre_screen$Var1, type = "bar")
+fig_genre_screen
+```
+
+============================================================================================================================
+```{r}
+#Merge people with company
+merge_people_company<- merge(x=company,y=people, by.x = "Name",by.y = "Company Name" ,all=FALSE)
+#Exact useful columns
+merge_people_company<-merge_people_company[,-c(2,3,4,5,6,7,8,10,23)]
+
+#Merge film with company
+merge_film_company<- merge(x=company,y=film, by.x = "Name",by.y = "Company Name" ,all=FALSE)
+#Exact useful columns
+merge_film_company<-merge_film_company[,-c(10,14,22)]
+
+#Merge screening with company
+merge_screen_company<- merge(x=company,y=screen, by.x = "Name",by.y = "Company Name" ,all=FALSE)
+#Exact useful columns
+merge_screen_company<-merge_screen_company[,-c(10,26)]
+
+```
+
+```{r}
+library(dplyr)
+#Finding out companies that have films to screen on Cannes (186)
+company_screen_list <- unique(merge_screen_company$Name)
+company_screen <- company%>%filter(Name %in% company_screen_list)
+head(company_screen)
+#There are 186 companies have films to screen on Cannes out of 5609 companies
+
+##Number of companies in each country (in total 33 countries)
+company_screen_df <- as.data.frame(sort(table(company_screen$Country),decreasing = T))
+head(company_screen_df)
+
+plot_ly(y=company_screen_df$Freq,x=company_screen_df$Var1, type = "bar")
+```
+```{r}
+#Number of companies in each states in the US
+company_screen_us<-company_screen[company_screen$Country=="USA",]
+company_screen_us_list <- as.data.frame(sort(table(company_screen_us$State),decreasing = T))
+head(company_screen_list)
+plot_ly(values=company_screen_us_list$Freq,labels=company_screen_us_list$Var1, type = "pie")
+```
+```{r}
+#people analytics in companies
+#count people for each company
+a<-sort(table(people$`Job title`),decreasing=T)
+
+company_list_all <-merge_people_company%>%group_by(Name)%>%count(sort=TRUE)
+#Mean is 1.67
+mean(company_list_all$n)
+#Median is 1
+median(company_list_all$n)
+
+#Select companies that have more than 10 people, there are 38 companies
+company_list_10 <- merge_people_company%>%group_by(Name)%>%count(sort=TRUE)%>%filter(n>10)
+#Mean is 18
+mean(company_list_10$n)
+#Median is 16
+median(company_list_10$n)
+
+#Top 1 company named VARIETY, which has 38 people, they have 34 different job titles
+merge_people_company[merge_people_company$Name=="VARIETY",]%>%group_by(`Job title`)%>%count(sort=TRUE)
+
+#Top 2 company named MARCHE DU FILM, which has 31 people, they have 27 different job titles
+merge_people_company[merge_people_company$Name=="MARCHE DU FILM",]%>%group_by(`Job title`)%>%count(sort=TRUE)
+
+#TOP 3 company named BFI - BRITISH FILM INSTITUTE, they have 29 different job titles
+merge_people_company[merge_people_company$Name=="BFI - BRITISH FILM INSTITUTE",]%>%group_by(`Job title`)%>%count(sort=TRUE)
+```
+
+```{r}
+#Import merged cinando data
+library(readxl)
+cinando<-read_excel("C:/Users/60171/Desktop/job/72/Cinando_allcompany.xlsx")
+all_company_list <- unique(cinando$`Name`)
+
+company_not_in_list <- company%>%filter(!Name %in% all_company_list)
+```
+
+
+```{r}
+cinando_vod_people<- read_csv("cinando_vod people data.csv", 
+    col_types = cols(Job.title = col_character(), 
+        Name = col_character()))
+
+cinando_vod_people%>%group_by(`Job.title`)%>%count(sort=TRUE)
+```
+

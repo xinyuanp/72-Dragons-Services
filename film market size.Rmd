@@ -1,0 +1,35 @@
+---
+title: "Film industry size"
+output: html_notebook
+---
+
+```{r}
+library(readr)
+country_statistics<- read_csv("breakdown by country.csv")
+mojo <- read_csv("MOJO.csv")
+mojo_us <- read_csv("USAMojo.csv")
+```
+
+```{r}
+library(dplyr)
+mojo_by_country <- mojo%>%group_by(Country)%>%summarize(MOJO_Total_Gross=sum(as.numeric(Gross),na.rm = T))
+
+a<-merge(country_statistics,mojo_by_country,by.x = "Production.Countries", by.y = "Country", all=T)
+
+sum(as.numeric(mojo_us$Domestic.Box.Office.N), na.rm=T)
+unique(mojo_us$Name)
+
+write.csv(a,file = "breakdown.csv")
+```
+
+```{r}
+library(countrycode)
+merged <- merged%>% mutate(code= countrycode(`Production Countries`, origin = 'country.name', destination = 'iso3c'))
+
+merged<-read_csv("breakdown by country_merged.csv")
+library(plotly)
+library(rjson)
+fig_no <- plot_ly(merged, type='choropleth', locations=merged$code, z=merged$`No. of Movies`, text=merged$`Production Countries`, colorscale="Earth",zmax=20000, zmin=1)
+fig_no
+```
+
