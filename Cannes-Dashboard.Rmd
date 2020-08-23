@@ -1,0 +1,199 @@
+---
+title: "2020 Cannes Film Festival"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(readr)
+library(leaflet)
+library(DT)
+library(tidyverse)
+library(lubridate)
+library(plotly)
+library(readr)
+library(readxl)
+```
+
+Company
+====================
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Comapny information
+
+```{r}
+company<- read_csv("job/72/Cinando_CompanySearch.csv")
+company<-company[,c(-1,-11)]
+
+company$Name <- iconv(company$Name, to = "UTF-8")
+company$Country <- iconv(company$Country, to = "UTF-8")
+company$Address <- iconv(company$Address, to = "UTF-8")
+company$Zip <- iconv(company$Zip, to = "UTF-8")
+company$City <- iconv(company$City, to = "UTF-8")
+company$State <- iconv(company$State, to = "UTF-8")
+company$Tel <- iconv(company$Tel, to = "UTF-8")
+company$Fax <- iconv(company$Fax, to = "UTF-8")
+company$Activity <- iconv(company$Activity, to = "UTF-8")
+
+datatable(
+  company, rownames = FALSE,
+  extensions = 'Buttons', options = list(
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
+  )
+)
+```
+
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Top 20 countries that company's located
+
+```{r}
+library(plyr)
+#Number of companies in each country (in total 115 countries)
+country_list<-sort(table(company$Country),decreasing = T)
+country<-as.data.frame(country_list)
+country_20<-country[1:20,]
+fig_country <- plot_ly(y=country_20$Freq,x=country_20$Var1, type = "bar")
+fig_country
+```
+
+### Company's distribution in the US
+
+```{r}
+#Number of companies in each states in the US
+company_us<-company[company$Country=="USA",]
+state_list<-sort(table(company_us$State),decreasing = T)
+state<-as.data.frame(state_list)
+fig_state <- plot_ly(y=state$Freq,x=state$Var1, type = "bar")
+fig_state
+```
+
+
+Film
+====================
+Column {data-width=650}
+-----------------------------------------------------------------------
+### Film information
+
+```{r}
+film <- read_excel("job/72/Cinando_FilmSearch.xlsx")
+film <- film[,c(-12,-13)]
+
+datatable(
+  film, rownames = FALSE,
+  extensions = 'Buttons', options = list(
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
+  )
+)
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Film's genre
+
+```{r}
+#Number of films in each genre (in total 39 genres)
+genre_list <-sort(table(film$Genre),decreasing = T)
+genre <- as.data.frame(genre_list)
+fig_genre <- plot_ly(y=genre$Freq,x=genre$Var1, type = "bar")
+fig_genre
+```
+
+### Film's global distribution
+
+```{r}
+#Number of films in each country (in total 101 countries)
+country_list_film<-sort(table(film$Country),decreasing = T)
+country_film<-as.data.frame(country_list_film)
+fig_country_film <- plot_ly(y=country_film$Freq,x=country_film$Var1, type = "bar")
+fig_country_film
+```
+
+People
+====================
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### People information
+
+```{r}
+people <- read_csv("job/72/Cinando_PeopleSearch.csv")
+people <- people[,c(-1,-15)]
+
+for (i in 1:ncol(people)){
+  people[,i]<-iconv(unlist(people[,i]) , to = "UTF-8")
+}
+
+datatable(
+  people, rownames = FALSE,
+  extensions = 'Buttons', options = list(
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
+  )
+)
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### People's global distribution
+
+```{r}
+#Number of people in each country (in total 115 countries)
+country_list_people<-sort(table(people$Country),decreasing = T)
+country_people<-as.data.frame(country_list_people)
+fig_country_people <- plot_ly(y=country_people$Freq,x=country_people$Var1, type = "bar")
+fig_country_people
+```
+
+
+Screening
+====================
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Screening information
+
+```{r}
+screen <- read_excel("job/72/Cinando_Screenings.xlsx")
+screen <- screen[,c(-17)]
+
+datatable(
+  screen, rownames = FALSE,
+  extensions = 'Buttons', options = list(
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
+  )
+)
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Screening film's genre
+
+```{r}
+#Screeing films' genre (34 in total)
+genre_screen_list <-sort(table(screen$Genre),decreasing = T)
+genre_screen <- as.data.frame(genre_screen_list)
+fig_genre_screen <- plot_ly(y=genre_screen$Freq,x=genre_screen$Var1, type = "bar")
+fig_genre_screen
+```
+
+
+### Screening film's genre
+```{r}
+fig_genre_screen_pie <- plot_ly(values=genre_screen$Freq,labels=genre_screen$Var1, type = "pie",
+                                textposition = 'inside',
+                                textinfo = 'label+percent')
+fig_genre_screen_pie
+```
